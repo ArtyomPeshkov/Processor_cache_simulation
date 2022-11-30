@@ -97,12 +97,12 @@ module cpu(input clk, output wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DAT
         //$fdisplay(glob.fl, "Total ticks: %0d", ($time)/2);
         //$fdisplay(glob.fl, "Total memory accesses: %0d", glob.hits + glob.miss);
         //$fdisplay(glob.fl, "Cache hits: %0d", glob.hits);
-        //$fdisplay(glob.fl, "Success hits (%%): %0f", glob.hits / (glob.hits + glob.miss));
+        //$fdisplay(glob.fl, "Success hits (percent): %0f", glob.hits / (glob.hits + glob.miss));
 
         $display("Total ticks: %0d", ($time)/2);
         $display("Total memory accesses: %0d", glob.hits + glob.miss);
         $display("Cache hits: %0d", glob.hits);
-        $display("Success hits (%%): %0f", glob.hits * 100 / (glob.hits + glob.miss));
+        $display("Success hits (percent): %0f", glob.hits * 100 / (glob.hits + glob.miss));
 
         `delay(2, 1);
         $fclose(glob.fl);

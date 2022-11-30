@@ -1,29 +1,27 @@
-`include "nand2.sv"
+`include "consts.sv"
+`include "cpu.sv"
+`include "cache.sv"
+`include "memory.sv"
 
-module nand2_test;
-  reg[1:0] in_value;
-  wire out;
-  
-  nand2_switch not_instance(.out(out), .in1(in_value[1]), .in2(in_value[0]));
-  
-  typedef enum {C1_NOP=0, C1_RESPONSE=7} enum_set;
+module testbench; 
     
-  initial begin
-    $dumpfile("dump.vcd");
-    $dumpvars(1, nand2_test);
-    
-    $monitor("in:%b, out:%b", in_value, out);
-    
-    #1 in_value = 2'b00; 
-    #2 in_value = 2'b01; 
-    #3 in_value = 2'b10; 
-    #4 in_value = 2'b11; 
-  end 
-    
-  initial begin    
-    enum_set enum_var;  
-    enum_var = C1_NOP; $display ("enum_var {C1_NOP} = %0d", enum_var);
-    enum_var = C1_RESPONSE; $display ("enum_var {C1_RESPONSE} = %0d", enum_var);
-  end 	  
-  
+    reg clk = 1;
+    wire [`ADDR1_BUS_SIZE - 1 : 0] a1;
+    wire [`DATA1_BUS_SIZE - 1 : 0] d1;
+    wire [`CTR1_BUS_SIZE - 1 : 0] c1;
+    wire [`ADDR2_BUS_SIZE - 1 : 0] a2;
+    wire [`DATA2_BUS_SIZE - 1 : 0] d2;
+    wire [`CTR2_BUS_SIZE - 1 : 0] c2;   
+    integer i = 0;
+    cpu my_cpu(clk, a1, d1, c1);
+    cache my_cache(clk, a1, d1, c1, a2, d2, c2, glob.dump_c, glob.reset);
+    memory my_memory(clk, a2, d2, c2, glob.dump_m, glob.reset);
+
+    initial begin
+        for (i = 1; i < 12000000; i++) begin
+            #1;
+            clk = ~clk;
+        end
+    end
+
 endmodule

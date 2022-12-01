@@ -119,8 +119,8 @@ module cpu(input clk, output wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DAT
     endtask
 
     task split_addr;
-        addr_tagset = addr_to_send[`CACHE_TAG_SIZE + `SET_SIZE + `OFFSET_SIZE - 1 : `OFFSET_SIZE];
-        addr_offset = addr_to_send[`OFFSET_SIZE - 1 : 0];
+        addr_tagset = addr_to_send[`CACHE_TAG_SIZE + `CACHE_SET_SIZE + `CACHE_OFFSET_SIZE - 1 : `CACHE_OFFSET_SIZE];
+        addr_offset = addr_to_send[`CACHE_OFFSET_SIZE - 1 : 0];
         //$fdisplay(glob.fl,"INIT t=%0t, tagset = %b, offset = %b, sent addr = %0d", $time, addr_tagset, addr_offset, addr_to_send);
     endtask
 

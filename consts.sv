@@ -28,9 +28,9 @@
 `define CACHE_LINE_COUNT 64
 `define CACHE_WAY 2
 
-`define TAG_SIZE 10
-`define SET_SIZE 5
-`define OFFSET_SIZE 4
+`define CACHE_TAG_SIZE 10
+`define CACHE_SET_SIZE 5
+`define CACHE_OFFSET_SIZE 4
 `define V 1
 `define D 1
 

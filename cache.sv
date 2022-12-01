@@ -296,7 +296,7 @@ module cache(input clk, input wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DA
                 2: begin
                     //$fdisplay(glob.fl,"Cache wants to write line, last_op = %0d. t=%0t", last_operation_from_cpu,$time);
                     last_operation_for_memory = `C2_WRITE_LINE;
-                    inner_cache_a2 = inner_cache_data[resived_set][sutable_line][`CACHE_LINE_SIZE +: `TAG_SIZE] * (1 << `CACHE_SET_SIZE) + resived_set;
+                    inner_cache_a2 = inner_cache_data[resived_set][sutable_line][`CACHE_LINE_SIZE +: `CACHE_TAG_SIZE] * (1 << `CACHE_SET_SIZE) + resived_set;
                     inner_cache_c2 = `C2_WRITE_LINE;                                    
                     for ( i = 0; i < `MEM_LINE_SIZE/`DATA2_BUS_SIZE; i++) begin
                         //$fdisplay(glob.fl,"Cache writing 16 byte data, part %0b. t=%0t", i + 1,$time);

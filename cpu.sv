@@ -132,7 +132,7 @@ module cpu(input clk, output wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DAT
     always @(clk) begin
         if (clk == 1 && is_owning == 1) begin
             case (command) 
-                0: begin
+                0: begin // C1_NOP
                     //$fdisplay(glob.fl,"Cpu in deal. t=%0t", $time);
                     inner_cpu_a1 = 'z;
                     last_operation = `C1_NOP;
@@ -142,7 +142,7 @@ module cpu(input clk, output wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DAT
                     command = -1;
                     finished_query = 1;
                 end
-                1: begin
+                1: begin // C1_READ8
                     //$fdisplay(glob.fl,"Cpu wants to read 8. addr part 1t=%0t", $time);
                     split_addr();
                     last_operation = `C1_READ8;
@@ -157,7 +157,7 @@ module cpu(input clk, output wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DAT
                     drop_leading();
                                            
                 end
-                2: begin                     
+                2: begin // C1_READ16                    
                     //$fdisplay(glob.fl,"Cpu wants to read 16. addr part 2 t=%0t", $time);
                     split_addr();
                     last_operation = `C1_READ16;
@@ -171,7 +171,7 @@ module cpu(input clk, output wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DAT
                     //$fdisplay(glob.fl,"Cpu gave up after asking to read 16. t=%0t", $time);
                     drop_leading();
                 end
-                3: begin 
+                3: begin // C1_READ32
                     //$fdisplay(glob.fl,"Cpu wants to read 32. addr part 1 t=%0t", $time);
                     split_addr();
                     last_operation = `C1_READ32;
@@ -186,7 +186,7 @@ module cpu(input clk, output wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DAT
                     drop_leading();
 
                 end
-                4: begin
+                4: begin // C1_INVALIDATE_LINE
                     //$fdisplay(glob.fl,"Cpu wants to invalidate some line. t=%0t", $time);
                     split_addr();
                     last_operation = `C1_INVALIDATE_LINE;
@@ -198,7 +198,7 @@ module cpu(input clk, output wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DAT
                     drop_leading();
 
                 end
-                5: begin
+                5: begin // C1_WRITE8
                     //$fdisplay(glob.fl,"Cpu wants to write 8. addr part 1 t=%0t", $time);
                     split_addr();
                     last_operation = `C1_WRITE8;
@@ -212,7 +212,7 @@ module cpu(input clk, output wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DAT
                     //$fdisplay(glob.fl,"Cpu gave up after asking to write 8. t=%0t", $time);
                     drop_leading();
                 end
-                6: begin
+                6: begin // C1_WRITE16
                     //$fdisplay(glob.fl,"Cpu wants to write 16. addr part 1 t=%0t", $time);
                     split_addr();
                     last_operation = `C1_WRITE16;
@@ -227,7 +227,7 @@ module cpu(input clk, output wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DAT
                     drop_leading();                     
 
                 end
-                7: begin
+                7: begin // C1_WRITE32
                     split_addr();
                     last_operation = `C1_WRITE32;
                     inner_cpu_a1 = addr_tagset;

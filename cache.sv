@@ -4,8 +4,8 @@ module cache(input clk, input wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DA
 // CPU side
     bit is_owning_cpu = 0;
     bit last_used [`CACHE_LINE_COUNT/`CACHE_WAY - 1 : 0];
-    //V + D + TAG_SIZE + CACHE_LINE_SIZE = 1 + 1 + 10 + 16*8 = 1 + 1 + 10 + 128
-    reg [(`V + `D + `TAG_SIZE + `CACHE_LINE_SIZE) - 1 : 0] inner_cache_data [`CACHE_LINE_COUNT/`CACHE_WAY - 1 : 0][`CACHE_WAY - 1 : 0];
+    //V + D + CACHE_TAG_SIZE + CACHE_LINE_SIZE = 1 + 1 + 10 + 16*8 = 1 + 1 + 10 + 128
+    reg [(`V + `D + `CACHE_TAG_SIZE + `CACHE_LINE_SIZE) - 1 : 0] inner_cache_data [`CACHE_LINE_COUNT/`CACHE_WAY - 1 : 0][`CACHE_WAY - 1 : 0];
     integer i = 0;
     reg[`CACHE_LINE_SIZE/4 - 1 : 0] data1;
     reg[`CACHE_LINE_SIZE/4 - 1 : 0] data2;
@@ -35,14 +35,14 @@ module cache(input clk, input wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DA
     integer sutable_line = -1;
 // Inner data
 
-    reg [`TAG_SIZE - 1 : 0] resived_tag = 'z;
-    reg [`SET_SIZE - 1 : 0] resived_set = 'z;
-    reg [`TAG_SIZE - 1 : 0] inner_tag = 'z;
+    reg [`CACHE_TAG_SIZE - 1 : 0] resived_tag = 'z;
+    reg [`CACHE_SET_SIZE - 1 : 0] resived_set = 'z;
+    reg [`CACHE_TAG_SIZE - 1 : 0] inner_tag = 'z;
     reg inner_v = 'z;
     reg inner_d = 'z;
 
-    reg [`TAG_SIZE + `SET_SIZE - 1 : 0] addr_tagset;
-    reg [`OFFSET_SIZE - 1 : 0] addr_offset;
+    reg [`CACHE_TAG_SIZE + `CACHE_SET_SIZE - 1 : 0] addr_tagset;
+    reg [`CACHE_OFFSET_SIZE - 1 : 0] addr_offset;
     reg [`CACHE_LINE_SIZE : 0] data_to_read;
     reg [2 * `DATA1_BUS_SIZE : 0] data_to_write;
 
@@ -60,9 +60,9 @@ module cache(input clk, input wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DA
         $fdisplay(glob.fdc,"Cache dump. t = %0t", $time);
         for (int l = 0; l < `CACHE_LINE_COUNT/`CACHE_WAY; l++) begin
             for (int j = 0; j < `CACHE_WAY; j++)begin
-                inner_tag = inner_cache_data[l][j][(`TAG_SIZE + `CACHE_LINE_SIZE) - 1 : `CACHE_LINE_SIZE];
-                inner_v = inner_cache_data[l][j][`D + `TAG_SIZE + `CACHE_LINE_SIZE]; 
-                inner_d = inner_cache_data[l][j][`TAG_SIZE + `CACHE_LINE_SIZE];      
+                inner_tag = inner_cache_data[l][j][(`CACHE_TAG_SIZE + `CACHE_LINE_SIZE) - 1 : `CACHE_LINE_SIZE];
+                inner_v = inner_cache_data[l][j][`D + `CACHE_TAG_SIZE + `CACHE_LINE_SIZE]; 
+                inner_d = inner_cache_data[l][j][`CACHE_TAG_SIZE + `CACHE_LINE_SIZE];      
                 data1 = inner_cache_data[l][j][`CACHE_LINE_SIZE/4 - 1 : 0];
                 data2 = inner_cache_data[l][j][`CACHE_LINE_SIZE/2 - 1: `CACHE_LINE_SIZE/4];
                 data3 = inner_cache_data[l][j][`CACHE_LINE_SIZE * 3 / 4 - 1 : `CACHE_LINE_SIZE/2];
@@ -100,11 +100,11 @@ module cache(input clk, input wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DA
             //$fdisplay(glob.fl,"Cache in deal last_op = %b. t=%0t", last_operation_from_cpu, $time);
             if (last_operation_from_cpu == `C1_READ8 || last_operation_from_cpu == `C1_READ16 || last_operation_from_cpu == `C1_READ32 || last_operation_from_cpu == `C1_WRITE8 || last_operation_from_cpu == `C1_WRITE16 || last_operation_from_cpu == `C1_WRITE32) begin
                 sutable_line = -1;
-                resived_tag = addr_tagset[(`TAG_SIZE + `SET_SIZE) - 1 : `SET_SIZE];
-                resived_set = addr_tagset[`SET_SIZE - 1 : 0];
+                resived_tag = addr_tagset[(`CACHE_TAG_SIZE + `CACHE_SET_SIZE) - 1 : `CACHE_SET_SIZE];
+                resived_set = addr_tagset[`CACHE_SET_SIZE - 1 : 0];
                 for (int j = 0; j < `CACHE_WAY; j++) begin
-                    inner_tag = inner_cache_data[resived_set][j][(`TAG_SIZE + `CACHE_LINE_SIZE) - 1 : `CACHE_LINE_SIZE];
-                    inner_v = inner_cache_data[resived_set][j][`D + `TAG_SIZE + `CACHE_LINE_SIZE];                     
+                    inner_tag = inner_cache_data[resived_set][j][(`CACHE_TAG_SIZE + `CACHE_LINE_SIZE) - 1 : `CACHE_LINE_SIZE];
+                    inner_v = inner_cache_data[resived_set][j][`D + `CACHE_TAG_SIZE + `CACHE_LINE_SIZE];                     
                     if (inner_tag == resived_tag && inner_v == 1) begin
                         `delay(8,1)
                         //$fdisplay(glob.fl,"Cache hit j = %b. t=%0t", j,$time);
@@ -116,8 +116,8 @@ module cache(input clk, input wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DA
                 if (sutable_line == -1) begin
                     glob.miss += 1;
                     sutable_line = (last_used[resived_set] + 1) % 2; // отрицание last_used для integer
-                    inner_v = inner_cache_data[resived_set][sutable_line][`D + `TAG_SIZE + `CACHE_LINE_SIZE];
-                    inner_d = inner_cache_data[resived_set][sutable_line][`TAG_SIZE + `CACHE_LINE_SIZE];
+                    inner_v = inner_cache_data[resived_set][sutable_line][`D + `CACHE_TAG_SIZE + `CACHE_LINE_SIZE];
+                    inner_d = inner_cache_data[resived_set][sutable_line][`CACHE_TAG_SIZE + `CACHE_LINE_SIZE];
                     //$fdisplay(glob.fl,"Cache miss, valid = %0b, dirty = %0b, set = %b, sutable_line = %b, . t=%0t\n", inner_v,inner_d, resived_set, sutable_line,$time);                   
                     `delay(4,1)
                     if (inner_v == 1 && inner_d == 1) begin
@@ -129,9 +129,9 @@ module cache(input clk, input wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DA
                     command_for_mem = 1;
                     wait(clk == 1 && finished_query_in_mem == 1);
                     //$fdisplay(glob.fl,"Cache miss finished. t = %0t", $time);
-                    inner_cache_data[resived_set][sutable_line][`TAG_SIZE + `CACHE_LINE_SIZE - 1 : `CACHE_LINE_SIZE] = resived_tag;
-                    inner_cache_data[resived_set][sutable_line][`TAG_SIZE + `CACHE_LINE_SIZE] = 0; //dirty
-                    inner_cache_data[resived_set][sutable_line][`D + `TAG_SIZE + `CACHE_LINE_SIZE] = 1; //valid
+                    inner_cache_data[resived_set][sutable_line][`CACHE_TAG_SIZE + `CACHE_LINE_SIZE - 1 : `CACHE_LINE_SIZE] = resived_tag;
+                    inner_cache_data[resived_set][sutable_line][`CACHE_TAG_SIZE + `CACHE_LINE_SIZE] = 0; //dirty
+                    inner_cache_data[resived_set][sutable_line][`D + `CACHE_TAG_SIZE + `CACHE_LINE_SIZE] = 1; //valid
                     finished_query_in_mem = 0;
                     last_used[resived_set] = ~last_used[resived_set];
 
@@ -154,28 +154,28 @@ module cache(input clk, input wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DA
                 end else if (last_operation_from_cpu == `C1_WRITE8) begin
                     //$fdisplay(glob.fl,"Cache wrote 8 bit data. t=%0t", $time);
                     inner_cache_data[resived_set][sutable_line][addr_offset*8 +: 8] = data_to_write;
-                    inner_cache_data[resived_set][sutable_line][`TAG_SIZE + `CACHE_LINE_SIZE] = 1;    
+                    inner_cache_data[resived_set][sutable_line][`CACHE_TAG_SIZE + `CACHE_LINE_SIZE] = 1;    
                     inner_cache_c1 = `C1_RESPONSE;                                   
                 end else if (last_operation_from_cpu == `C1_WRITE16) begin
                     //$fdisplay(glob.fl,"Cache wrote 16 bit data. t=%0t", $time);                    
                     inner_cache_data[resived_set][sutable_line][addr_offset*8 +: 16] = data_to_write;
-                    inner_cache_data[resived_set][sutable_line][`TAG_SIZE + `CACHE_LINE_SIZE] = 1;
+                    inner_cache_data[resived_set][sutable_line][`CACHE_TAG_SIZE + `CACHE_LINE_SIZE] = 1;
                     inner_cache_c1 = `C1_RESPONSE;   
                 end else if (last_operation_from_cpu == `C1_WRITE32) begin 
                     inner_cache_data[resived_set][sutable_line][addr_offset*8 +: 16] = data_to_write[15 : 0];
                     //$fdisplay(glob.fl,"Cache wrote 1 pack data = %0b. t=%0t",inner_cache_data[resived_set][sutable_line][addr_offset*8 +: 16], $time);                         
                     inner_cache_data[resived_set][sutable_line][addr_offset*8 + 16 +: 16] = data_to_write[31 : 16];
                     //$fdisplay(glob.fl,"Cache wrote 2 pack data = %0b. t=%0t",inner_cache_data[resived_set][sutable_line][addr_offset*8 + 16 +: 16], $time);
-                    inner_cache_data[resived_set][sutable_line][`TAG_SIZE + `CACHE_LINE_SIZE] = 1;
+                    inner_cache_data[resived_set][sutable_line][`CACHE_TAG_SIZE + `CACHE_LINE_SIZE] = 1;
                     inner_cache_c1 = `C1_RESPONSE;  
                 end 
             end else if (last_operation_from_cpu == `C1_INVALIDATE_LINE) begin
-                resived_tag = addr_tagset[(`TAG_SIZE + `SET_SIZE) - 1 : `SET_SIZE];
-                resived_set = addr_tagset[`SET_SIZE - 1 : 0];
+                resived_tag = addr_tagset[(`CACHE_TAG_SIZE + `CACHE_SET_SIZE) - 1 : `CACHE_SET_SIZE];
+                resived_set = addr_tagset[`CACHE_SET_SIZE - 1 : 0];
                 for (int j = 0; j < `CACHE_WAY; j++) begin
-                    inner_tag = inner_cache_data[resived_set][j][(`TAG_SIZE + `CACHE_LINE_SIZE) - 1 : `CACHE_LINE_SIZE];
-                    inner_v = inner_cache_data[resived_set][j][`D + `TAG_SIZE + `CACHE_LINE_SIZE];           
-                    inner_d = inner_cache_data[resived_set][j][`TAG_SIZE + `CACHE_LINE_SIZE];          
+                    inner_tag = inner_cache_data[resived_set][j][(`CACHE_TAG_SIZE + `CACHE_LINE_SIZE) - 1 : `CACHE_LINE_SIZE];
+                    inner_v = inner_cache_data[resived_set][j][`D + `CACHE_TAG_SIZE + `CACHE_LINE_SIZE];           
+                    inner_d = inner_cache_data[resived_set][j][`CACHE_TAG_SIZE + `CACHE_LINE_SIZE];          
                     if (inner_tag == resived_tag && inner_v == 1) begin
                         //$fdisplay(glob.fl,"Cache found what to invalidate j = %b. t=%0t", j,$time);
                         sutable_line = j;
@@ -185,8 +185,8 @@ module cache(input clk, input wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DA
                             command_for_mem = 2;
                             wait(clk == 1 && finished_query_in_mem == 1);
                         end
-                        inner_cache_data[resived_set][sutable_line][`D + `TAG_SIZE + `CACHE_LINE_SIZE] = 0;
-                        inner_cache_data[resived_set][j][`TAG_SIZE + `CACHE_LINE_SIZE] = 0; 
+                        inner_cache_data[resived_set][sutable_line][`D + `CACHE_TAG_SIZE + `CACHE_LINE_SIZE] = 0;
+                        inner_cache_data[resived_set][j][`CACHE_TAG_SIZE + `CACHE_LINE_SIZE] = 0; 
                         last_used[resived_set] = (sutable_line + 1) % 2;
                     end
                 end
@@ -296,7 +296,7 @@ module cache(input clk, input wire [`ADDR1_BUS_SIZE - 1 : 0] a1, inout wire [`DA
                 2: begin
                     //$fdisplay(glob.fl,"Cache wants to write line, last_op = %0d. t=%0t", last_operation_from_cpu,$time);
                     last_operation_for_memory = `C2_WRITE_LINE;
-                    inner_cache_a2 = inner_cache_data[resived_set][sutable_line][`CACHE_LINE_SIZE +: `TAG_SIZE] * (1 << `SET_SIZE) + resived_set;
+                    inner_cache_a2 = inner_cache_data[resived_set][sutable_line][`CACHE_LINE_SIZE +: `TAG_SIZE] * (1 << `CACHE_SET_SIZE) + resived_set;
                     inner_cache_c2 = `C2_WRITE_LINE;                                    
                     for ( i = 0; i < `MEM_LINE_SIZE/`DATA2_BUS_SIZE; i++) begin
                         //$fdisplay(glob.fl,"Cache writing 16 byte data, part %0b. t=%0t", i + 1,$time);

@@ -31,7 +31,7 @@ module memory #(parameter _SEED = 225526) (input clk, input wire [`ADDR2_BUS_SIZ
     always@(posedge dump_memory) begin
         $fdisplay(glob.fdm,"Memory dump. t=%0t", $time);
         for (i = 0; i < (1 << `MEM_BYTE_SIZE); i++ ) begin
-                $fdisplay(glob.fdm, "[tag = %0d, set = %0d, offset = %0d] %0d", i[`SET_SIZE + `OFFSET_SIZE +: `TAG_SIZE], i[`OFFSET_SIZE +: `SET_SIZE] ,i[0 +: `OFFSET_SIZE], mem_data[i]);  
+                $fdisplay(glob.fdm, "[tag = %0d, set = %0d, offset = %0d] %0d", i[`CACHE_SET_SIZE + `CACHE_OFFSET_SIZE +: `CACHE_TAG_SIZE], i[`CACHE_OFFSET_SIZE +: `CACHE_SET_SIZE] ,i[0 +: `CACHE_OFFSET_SIZE], mem_data[i]);  
         end       
         $fdisplay(glob.fdm, "-------------------------------------------------------");
     end
